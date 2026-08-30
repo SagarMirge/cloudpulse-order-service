@@ -1,0 +1,111 @@
+{
+  "title": "CloudPulse Order Service — Overview",
+  "uid": "cloudpulse-order-service",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"cloudpulse-order-service\"}[1m])) by (uri, status)",
+          "legendFormat": "{{uri}} [{{status}}]"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Latency p95 / p99 (s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"cloudpulse-order-service\"}[5m])) by (le, uri))",
+          "legendFormat": "p95 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"cloudpulse-order-service\"}[5m])) by (le, uri))",
+          "legendFormat": "p99 {{uri}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "JVM Heap Used (MB)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{application=\"cloudpulse-order-service\", area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "{{id}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "JVM GC Pause Time (s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"cloudpulse-order-service\"}[1m])",
+          "legendFormat": "{{action}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Orders Created (Total)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "orders_created_total{application=\"cloudpulse-order-service\"}" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Orders Failed (Total)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 16 },
+      "targets": [
+        { "expr": "orders_failed_total{application=\"cloudpulse-order-service\"}" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Orders Cancelled (Total)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 16 },
+      "targets": [
+        { "expr": "orders_cancelled_total{application=\"cloudpulse-order-service\"}" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Order Processing Duration p95 (s)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 16 },
+      "targets": [
+        { "expr": "orders_processing_duration_seconds{application=\"cloudpulse-order-service\", quantile=\"0.95\"}" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Active HTTP Requests",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"cloudpulse-order-service\"}[1m])) by (status)",
+          "legendFormat": "status {{status}}"
+        }
+      ]
+    }
+  ]
+}

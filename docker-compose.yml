@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  order-service:
+    build: .
+    container_name: cloudpulse-order-service
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: orders_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloudpulse-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: cloudpulse-postgres
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cloudpulse-net
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: cloudpulse-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - order-service
+    networks:
+      - cloudpulse-net
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: cloudpulse-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - cloudpulse-net
+
+volumes:
+  postgres-data:
+  grafana-data:
+
+networks:
+  cloudpulse-net:
+    driver: bridge

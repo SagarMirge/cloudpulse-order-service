@@ -1,0 +1,9 @@
+target/
+.git/
+.github/
+.idea/
+*.md
+infra/
+k8s/
+monitoring/
+docs/
