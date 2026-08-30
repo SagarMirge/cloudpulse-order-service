@@ -4,13 +4,10 @@
 
 A Spring Boot microservice demonstrating an end-to-end cloud-native delivery pipeline: containerized with Docker, deployed to **AWS EKS** (with a documented **Azure AKS** alternate path), instrumented with **Prometheus + Grafana**, and shipped through a **GitHub Actions CI/CD pipeline** with automated testing and container vulnerability scanning.
 
-Built to go deeper than a typical fresher project — real Infrastructure as Code, real metrics on real business events, not just a "hello world" wrapped in Docker.
+Built to go deeper than a typical fresher project :) — real Infrastructure as Code, real metrics on real business events, not just a "hello world" wrapped in Docker.
 
 ![Architecture Diagram](docs/architecture-diagram.svg)
 
-## Why this project exists
-
-Most entry-level portfolios show either backend code *or* a deployment screenshot. This one shows the full loop: code → container → cluster → live metrics → autoscaling under load — the actual responsibilities split between backend and DevOps roles in industry.
 
 ## Tech stack
 
