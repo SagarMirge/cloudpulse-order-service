@@ -51,5 +51,4 @@ Step 13 — Deploy Kubernetes manifests
 kubectl apply -f k8s/ creates the Deployment, Service, Ingress, and HPA objects. The scheduler places pods on the
 worker nodes from Step 8, pulling the image from Step 9.
 Step 14 — terraform destroy
-Tears down the cluster, node group, NAT Gateway, RDS instance, and VPC in reverse dependency order. Billing for
-each resource stops only once it is actually deleted, not when the destroy command is issued.
+
