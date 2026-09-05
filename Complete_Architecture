@@ -1,1 +1,55 @@
+Architecure And Flow of Project
 
+AWS Deployment — Step by Step Theory
+Primary deployment target. Corresponds to infra/aws/ in your repo.
+Step 1 — IAM user + AWS CLI auth
+Create an IAM user (never use root) with programmatic access, then run aws configure locally. This authenticates
+your terminal to make API calls on your behalf. No infrastructure is created, so no billing starts here.
+Step 2 — Terraform init
+Downloads the AWS provider plugin Terraform needs to translate your .tf files into real AWS API calls. Reads nothing
+from your account yet, creates nothing. No billing.
+Step 3 — Terraform plan
+Terraform compares your .tf files against the current state of your AWS account and prints a diff of what it would
+create, change, or destroy. Purely read-only against your account. No billing.
+Step 4 — VPC + subnets creation
+terraform apply begins building the network: a VPC, 2+ public subnets (for load balancers) and 2+ private subnets (for
+worker nodes/database) across two Availability Zones, plus route tables. Subnets themselves are free; the NAT
+Gateway created alongside them is not.
+n BILLING STARTS HERE
+Step 5 — NAT Gateway + Elastic IP
+Created as part of the VPC module so private-subnet resources can reach the internet. This is billed per hour plus
+per-GB data processed from the moment it's created, regardless of whether traffic flows through it.
+n BILLING STARTS HERE
+Step 6 — IAM roles for EKS
+Creates the cluster role (lets the EKS control plane call AWS APIs) and node role (lets worker EC2 instances join the
+cluster, pull from ECR, write logs). IAM roles themselves are free to create and keep.
+Step 7 — EKS control plane
+Creates the actual aws_eks_cluster resource — AWS provisions and manages the API server, etcd, and scheduler
+for you. This starts the $0.10/hour control-plane fee the instant it finishes creating, and continues until you delete it.
+n BILLING STARTS HERE
+Step 8 — EKS managed node group
+Launches the EC2 instances (t3.medium by default in your Terraform) that register as Kubernetes worker nodes —
+this is what actually runs your pods. Standard EC2 instance-hour billing applies from launch.
+n BILLING STARTS HERE
+Step 9 — ECR repository
+Creates a private Docker registry for your image, with vulnerability scanning and a lifecycle policy to auto-expire old
+image tags. Storage is billed per GB-month; a small dev image costs fractions of a cent.
+n BILLING STARTS HERE
+
+Step 10 — RDS PostgreSQL instance
+Provisions a managed Postgres database inside the private subnets, security-group-restricted to the cluster only.
+Billed per instance-hour plus storage from the moment it's created.
+n BILLING STARTS HERE
+Step 11 — kubectl configuration
+aws eks update-kubeconfig fetches connection details for the new cluster and writes them to ~/.kube/config, and IAM
+identity is mapped to Kubernetes RBAC so your user can actually issue kubectl commands. No new billing — this just
+wires up access to what already exists.
+Step 12 — Build & push Docker image
+docker build packages the Spring Boot app; docker push uploads it to the ECR repo from Step 9 so the cluster has
+something to pull.
+Step 13 — Deploy Kubernetes manifests
+kubectl apply -f k8s/ creates the Deployment, Service, Ingress, and HPA objects. The scheduler places pods on the
+worker nodes from Step 8, pulling the image from Step 9.
+Step 14 — terraform destroy
+Tears down the cluster, node group, NAT Gateway, RDS instance, and VPC in reverse dependency order. Billing for
+each resource stops only once it is actually deleted, not when the destroy command is issued.
